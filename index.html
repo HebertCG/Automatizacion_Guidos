@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1410" />
+  <meta name="color-scheme" content="dark" />
+  <title>Guido's · Pedidos</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ===================== LOGIN ===================== -->
+  <main id="login" class="login">
+    <form id="login-form" class="login__card" autocomplete="on">
+      <div class="brand brand--login">
+        <span class="brand__mark">G</span>
+        <div class="brand__txt">
+          <span class="brand__name">GUIDO'S</span>
+          <span class="brand__sub">Panel de pedidos</span>
+        </div>
+      </div>
+      <label class="field">
+        <span>Correo</span>
+        <input id="email" type="email" inputmode="email" autocomplete="username" required placeholder="staff@guidos.pe" />
+      </label>
+      <label class="field">
+        <span>Contraseña</span>
+        <input id="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+      </label>
+      <p id="login-error" class="login__error" role="alert"></p>
+      <button id="login-btn" type="submit" class="btn btn--ok btn--block">Entrar a la cocina</button>
+      <p class="login__hint">Acceso solo para personal del local.</p>
+    </form>
+  </main>
+
+  <!-- ===================== APP ===================== -->
+  <div id="app" class="app hidden">
+    <div id="offline" class="offline hidden">Sin conexión — reintentando…</div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark">G</span>
+        <div class="brand__txt">
+          <span class="brand__name" id="marca-nombre">GUIDO'S</span>
+          <span class="brand__sub">Cocina en vivo</span>
+        </div>
+      </div>
+
+      <div id="kpis" class="kpis" aria-label="Indicadores de hoy"></div>
+
+      <div class="topbar__ctrl">
+        <button id="btn-mute" class="iconbtn" aria-label="Silenciar">🔔</button>
+        <span id="user-email" class="user-email"></span>
+        <button id="btn-logout" class="iconbtn" aria-label="Salir">Salir</button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Vistas del panel">
+      <button class="tab" data-tab="por_atender" role="tab" aria-selected="true">
+        Por atender <span class="tab-badge hidden"></span>
+      </button>
+      <button class="tab" data-tab="esperando" role="tab" aria-selected="false">
+        Esperando <span class="tab-badge hidden"></span>
+      </button>
+      <button class="tab" data-tab="cocina" role="tab" aria-selected="false">
+        Cocina <span class="tab-badge hidden"></span>
+      </button>
+      <button class="tab" data-tab="camino" role="tab" aria-selected="false">
+        En camino <span class="tab-badge hidden"></span>
+      </button>
+      <button class="tab" data-tab="hoy" role="tab" aria-selected="false">Hoy</button>
+      <button class="tab" data-tab="carta" role="tab" aria-selected="false">Carta</button>
+      <button class="tab" data-tab="historial" role="tab" aria-selected="false">Historial</button>
+    </nav>
+
+    <main class="board">
+      <section class="view" data-view="por_atender" role="tabpanel">
+        <div class="cards" data-list="por_atender"></div>
+      </section>
+      <section class="view hidden" data-view="esperando" role="tabpanel">
+        <div class="cards" data-list="esperando"></div>
+      </section>
+      <section class="view hidden" data-view="cocina" role="tabpanel">
+        <div class="cards" data-list="cocina"></div>
+      </section>
+      <section class="view hidden" data-view="camino" role="tabpanel">
+        <div class="cards" data-list="camino"></div>
+      </section>
+      <section class="view hidden" data-view="hoy" role="tabpanel">
+        <div class="cards" data-list="hoy"></div>
+      </section>
+
+      <!-- Carta -->
+      <section class="view hidden" data-view="carta" role="tabpanel">
+        <div id="menu-cont" class="menu"></div>
+      </section>
+
+      <!-- Historial + Clientes -->
+      <section class="view hidden" data-view="historial" role="tabpanel">
+        <div class="seg">
+          <button class="seg__btn is-active" data-seg="hist">Pedidos</button>
+          <button class="seg__btn" data-seg="cli">Clientes</button>
+        </div>
+
+        <div data-segview="hist">
+          <div class="filtros">
+            <input id="f-q" type="search" placeholder="# o teléfono / nombre" aria-label="Buscar" />
+            <select id="f-estado" aria-label="Estado">
+              <option value="">Todos los estados</option>
+              <option value="esperando_pago">Esperando pago</option>
+              <option value="pago_en_revision">Revisar pago</option>
+              <option value="por_aceptar">Por aceptar</option>
+              <option value="en_cocina">En cocina</option>
+              <option value="en_camino">En camino</option>
+              <option value="entregado">Entregado</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+            <select id="f-metodo" aria-label="Método de pago">
+              <option value="">Todo pago</option>
+              <option value="yape">Yape</option>
+              <option value="plin">Plin</option>
+              <option value="efectivo">Efectivo</option>
+            </select>
+            <input id="f-desde" type="date" aria-label="Desde" />
+            <input id="f-hasta" type="date" aria-label="Hasta" />
+            <button id="hist-aplicar" class="btn btn--sm btn--go">Filtrar</button>
+          </div>
+          <div id="hist-cont" class="hist"></div>
+        </div>
+
+        <div data-segview="cli" class="hidden">
+          <div class="filtros">
+            <input id="cli-search" type="search" placeholder="Buscar cliente por nombre o teléfono" aria-label="Buscar cliente" />
+            <button id="cli-buscar" class="btn btn--sm btn--go">Buscar</button>
+          </div>
+          <div id="cli-cont" class="clientes"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- Supabase v2 (UMD) → window.supabase, luego los módulos de la app -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
