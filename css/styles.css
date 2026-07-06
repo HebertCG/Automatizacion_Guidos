@@ -286,6 +286,19 @@ a { color: inherit; }
 .chip--link:hover { border-color: var(--st-cocina); }
 .card__notas { font-size: 0.88rem; color: var(--brand-yellow); background: rgba(255, 194, 28, 0.1); padding: 0.35rem 0.55rem; border-radius: var(--radius-sm); }
 .card__cancel { font-size: 0.88rem; color: #ff8a80; }
+.card__agregado {
+  display: flex; flex-direction: column; gap: 0.1rem;
+  font-size: 0.88rem; padding: 0.45rem 0.6rem;
+  border: 1px solid var(--sem-warn); border-radius: var(--radius-sm);
+  background: rgba(245, 166, 35, 0.12);
+}
+.card__agregado b { color: var(--brand-yellow); }
+.card__agregado span { color: var(--text-dim); }
+.card__agregado--nuevo { animation: pulso-agregado 1.6s ease-in-out infinite; }
+@keyframes pulso-agregado {
+  0%, 100% { background: rgba(245, 166, 35, 0.12); border-color: var(--sem-warn); }
+  50% { background: rgba(245, 166, 35, 0.28); border-color: var(--brand-yellow); }
+}
 .tag { padding: 0.12rem 0.45rem; border-radius: 6px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
 .tag--rojo { background: rgba(255, 59, 48, 0.2); color: #ff8a80; border: 1px solid rgba(255, 59, 48, 0.4); }
 
@@ -459,5 +472,6 @@ a { color: inherit; }
 /* ---------- Accesibilidad: menos movimiento ---------- */
 @media (prefers-reduced-motion: reduce) {
   .card.sem-urgent { animation: none; }
+  .card__agregado--nuevo { animation: none; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

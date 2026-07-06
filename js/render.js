@@ -73,6 +73,17 @@ function pagoBadge(o) {
   }</div>`;
 }
 
+function agregadoHtml(o) {
+  if (!o.agregado_texto) return "";
+  if (o.estado === "entregado" || o.estado === "cancelado") return "";
+  const min = minutosDesde(o.agregado_at);
+  const fresco = min != null && min < 10;
+  return `<div class="card__agregado ${fresco ? "card__agregado--nuevo" : ""}">
+    <b>➕ Agregado${min != null ? ` hace ${esc(textoMin(min))}` : ""}</b>
+    <span>${esc(o.agregado_texto)}</span>
+  </div>`;
+}
+
 function btn(accion, numero, label, variant) {
   return `<button class="btn btn--${variant}" data-action="${esc(accion)}" data-numero="${esc(
     numero
@@ -114,6 +125,7 @@ export function tarjetaPedido(o) {
       <span class="card__timer" title="minutos en este estado">⏱ <span class="t-min">${esc(textoMin(min))}</span></span>
       <span class="estado-chip">${esc(nombreEstado(o.estado))}</span>
     </header>
+    ${agregadoHtml(o)}
     <div class="card__cliente"><b>${esc(o.cliente_nombre || "—")}</b> ${waLink(o.cliente_phone)}
       ${o.cliente_solo_prepago ? `<span class="tag tag--rojo">solo prepago</span>` : ""}</div>
     ${itemsHtml(o.items)}
