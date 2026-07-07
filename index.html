@@ -27,20 +27,20 @@
         <img class="brand__logo" src="img/logo-guidos.png" alt="Guido's" width="46" height="46" />
         <div class="brand__txt">
           <span class="brand__name">GUIDO'S</span>
-          <span class="brand__sub">Panel de pedidos</span>
+          <span class="brand__sub">Acceso al sistema</span>
         </div>
       </div>
       <label class="field">
         <span>Correo</span>
-        <input id="email" type="email" inputmode="email" autocomplete="username" required placeholder="staff@guidos.pe" />
+        <input id="email" type="email" inputmode="email" autocomplete="username" required placeholder="tucorreo@guidos.pe" />
       </label>
       <label class="field">
         <span>Contraseña</span>
         <input id="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
       </label>
       <p id="login-error" class="login__error" role="alert"></p>
-      <button id="login-btn" type="submit" class="btn btn--ok btn--block">Entrar a la cocina</button>
-      <p class="login__hint">Acceso solo para personal del local.</p>
+      <button id="login-btn" type="submit" class="btn btn--ok btn--block">Entrar</button>
+      <p class="login__hint">Personal de Guido's · staff y reparto.</p>
     </form>
   </main>
 
@@ -62,7 +62,7 @@
       <div class="topbar__ctrl">
         <button id="btn-mute" class="iconbtn" aria-label="Silenciar">🔔</button>
         <span id="user-email" class="user-email"></span>
-        <button id="btn-logout" class="iconbtn" aria-label="Salir">Salir</button>
+        <button id="btn-logout" class="iconbtn" data-logout aria-label="Salir">Salir</button>
       </div>
     </header>
 
@@ -150,10 +150,42 @@
     </main>
   </div>
 
+  <!-- ============ APP DE REPARTO (rol motorizado) ============ -->
+  <!-- Mismo login y misma URL; el router monta esta vista cuando el
+       rol es "reparto". IDs propios (rep-*) para no chocar con el staff. -->
+  <div id="app-reparto" class="app-reparto hidden">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <img class="topbar__logo" src="img/logo-guidos.png" alt="Guido's" width="40" height="40" />
+        <div class="topbar__titles">
+          <span class="topbar__name">REPARTO</span>
+          <span id="rep-user-email" class="topbar__user"></span>
+        </div>
+      </div>
+      <div class="topbar__right">
+        <span class="pill" title="Entregas cerradas hoy">
+          <span class="pill__n" id="entregados-hoy">0</span>
+          <span class="pill__l">hoy</span>
+        </span>
+        <button id="rep-refrescar" class="iconbtn" aria-label="Actualizar">⟳</button>
+        <button class="iconbtn iconbtn--txt" data-logout aria-label="Salir">Salir</button>
+      </div>
+    </header>
+
+    <div id="rep-offline" class="offline hidden">Sin señal — reintentando…</div>
+
+    <main class="board">
+      <h2 class="board__h">Mis entregas</h2>
+      <div id="lista" class="lista" aria-live="polite">
+        <div class="vacio"><div class="vacio__emoji">⏳</div><p class="vacio__t">Cargando…</p></div>
+      </div>
+    </main>
+  </div>
+
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
-  <!-- Supabase v2 (UMD) → window.supabase, luego los módulos de la app -->
+  <!-- Supabase v2 (UMD) → window.supabase; el router decide la vista por rol. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/session-router.js"></script>
 </body>
 </html>

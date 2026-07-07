@@ -2,83 +2,19 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#140d09" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="Guido's · Reparto — entregas del motorizado" />
-  <title>Guido's · Reparto 🛵</title>
-
-  <!-- Favicon con el logo de la empresa (mismo origen → permitido por el CSP). -->
+  <!-- La app del reparto ya no vive aquí: ahora es la MISMA URL que el
+       panel y la vista se decide por el rol del usuario. Redirigimos a /. -->
+  <meta http-equiv="refresh" content="0; url=/" />
   <link rel="icon" type="image/png" href="img/logo-guidos.png" />
-  <link rel="apple-touch-icon" href="img/logo-guidos.png" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
-  <link rel="stylesheet" href="css/reparto.css" />
+  <title>Guido's · Reparto</title>
 </head>
-<body>
-  <!-- ===================== LOGIN ===================== -->
-  <main id="login" class="login">
-    <form id="login-form" class="login__card" autocomplete="on">
-      <img class="login__logo" src="img/logo-guidos.png" alt="Guido's" width="132" height="132" />
-      <h1 class="login__title">Guido's · Reparto <span aria-hidden="true">🛵</span></h1>
-      <p class="login__lead">Tus entregas del día, en tu bolsillo.</p>
-
-      <label class="field">
-        <span>Correo</span>
-        <input id="email" type="email" inputmode="email" autocomplete="username"
-               required placeholder="motorizado@guidos.pe" />
-      </label>
-      <label class="field">
-        <span>Contraseña</span>
-        <input id="password" type="password" autocomplete="current-password"
-               required placeholder="••••••••" />
-      </label>
-
-      <p id="login-error" class="login__error" role="alert"></p>
-      <button id="login-btn" type="submit" class="btn btn--entrar btn--block">Entrar</button>
-      <p class="login__hint">Acceso solo para repartidores de Guido's.</p>
-    </form>
-  </main>
-
-  <!-- ===================== APP ===================== -->
-  <div id="app" class="app hidden">
-    <header class="topbar">
-      <div class="topbar__brand">
-        <img class="topbar__logo" src="img/logo-guidos.png" alt="Guido's" width="40" height="40" />
-        <div class="topbar__titles">
-          <span class="topbar__name">REPARTO</span>
-          <span id="user-email" class="topbar__user"></span>
-        </div>
-      </div>
-      <div class="topbar__right">
-        <span class="pill" title="Entregas cerradas hoy">
-          <span class="pill__n" id="entregados-hoy">0</span>
-          <span class="pill__l">hoy</span>
-        </span>
-        <button id="btn-refrescar" class="iconbtn" aria-label="Actualizar">⟳</button>
-        <button id="btn-logout" class="iconbtn iconbtn--txt" aria-label="Salir">Salir</button>
-      </div>
-    </header>
-
-    <div id="offline" class="offline hidden">Sin señal — reintentando…</div>
-
-    <main class="board">
-      <h2 class="board__h">Mis entregas</h2>
-      <div id="lista" class="lista" aria-live="polite">
-        <div class="vacio"><div class="vacio__emoji">⏳</div><p class="vacio__t">Cargando…</p></div>
-      </div>
-    </main>
+<body style="background:#130c08;color:#f8f0e6;font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center">
+  <div>
+    <p>Redirigiendo a Guido's…</p>
+    <p><a href="/" style="color:#ffc21c;font-weight:700">Ir al inicio</a></p>
   </div>
-
-  <div id="toasts" class="toasts" aria-live="polite"></div>
-
-  <!-- Supabase v2 (UMD) → window.supabase, luego el módulo de la app. -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script type="module" src="js/reparto-app.js"></script>
+  <script>location.replace("/");</script>
 </body>
 </html>

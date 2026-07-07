@@ -4,7 +4,7 @@
 //  La ÚNICA vía para cambiar estado es la RPC accion_staff:
 //  jamás un UPDATE directo a orders.
 // ============================================================
-import { sb } from "./reparto-supabase.js";
+import { sb } from "./supabase.js";
 
 // Refresco de respaldo (además del tiempo real), en ms.
 export const POLL_MS = 15000;

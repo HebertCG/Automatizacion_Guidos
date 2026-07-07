@@ -1,128 +1,125 @@
-# Guido's · Reparto 🛵 — app de los motorizados
+# Guido's · Reparto 🛵 — vista del motorizado (por rol)
 
-Web app **móvil** para los repartidores de Guido's. Es la vista hermana del
-panel del staff (`index.html`): cuando el staff marca un pedido **"en camino"**,
-aparece aquí como una entrega del motorizado. Pensada para usarse **en el
-celular, en la calle, con una sola mano y a pleno sol**: todo grande, oscuro y
-de alto contraste.
+Web app **móvil** para los repartidores de Guido's. **No es otra página ni otra
+URL**: es la **misma** `panelguidos.klassia.lat`, y la vista que se muestra
+**depende de quién inicia sesión**:
 
-## En una frase
+- `staff@guidos.pe` entra → ve el **panel de cocina** (pedidos, carta, historial…).
+- `motorizado@guidos.pe` entra → ve **solo sus entregas** (nada de cocina).
 
-`/reparto.html` lista los pedidos en estado `en_camino`, ordenados del más
-antiguo al más nuevo, y deja al motorizado: ver **cuánto cobrar y qué vuelto
-llevar**, **navegar con Google Maps**, **llamar / escribir por WhatsApp** al
-cliente, y **cerrar** la entrega como *entregado* o *plantón*.
+Pensada para usarse en el celular, en la calle, con una sola mano y a pleno sol:
+todo grande, oscuro y de alto contraste.
 
-## Arquitectura (dentro de este mismo proyecto)
+## Cómo funciona el enrutado por rol
 
-No hay carpeta aparte ni build: ambas apps comparten `css/`, `js/` e `img/`, y
-un **solo contenedor** las sirve. Los archivos del reparto están nombrados por
-su función (`reparto-*`):
+Un **solo login** y un **solo `index.html`**. Al iniciar sesión, el router mira
+el rol del usuario y monta la vista correspondiente:
+
+```
+index.html
+ └─ js/session-router.js      ← login único + decide el rol
+      ├─ rol "staff"    → js/app.js          (panel de cocina, con css/styles.css)
+      └─ rol "reparto"  → js/reparto-app.js   (entregas, con css/reparto.css)
+```
+
+- El **rol** se resuelve en `js/roles.js`: primero mira el `user_metadata.role`
+  del usuario en Supabase; si no, usa el mapa de `js/config.js`
+  (`ROLES_POR_EMAIL`); si el correo no está, cae al **rol de menor privilegio**
+  (`reparto`), para que una cuenta nueva nunca vea el panel del staff por error.
+- Los módulos de cada app se cargan **de forma perezosa** (solo se descarga el
+  que se usa). La hoja `css/reparto.css` se agrega/retira dinámicamente, así los
+  estilos de las dos apps no se mezclan.
+
+### Agregar / cambiar usuarios y roles
+
+Edita el mapa en [`js/config.js`](js/config.js):
+
+```js
+export const ROLES_POR_EMAIL = {
+  "staff@guidos.pe": "staff",
+  "motorizado@guidos.pe": "reparto",
+  // "motorizado2@guidos.pe": "reparto",
+  // "gerente@guidos.pe": "staff",
+};
+```
+
+(O bien, en Supabase → Authentication → el usuario → *User metadata*, agrega
+`{ "role": "reparto" }` y no hace falta tocar el código.)
+
+## Arquitectura (dentro del mismo proyecto)
+
+Sin carpeta aparte y sin build: ambas vistas comparten `css/`, `js/` e `img/`.
 
 ```
 panelguidos/
-├── index.html                 # app STAFF (panel de pedidos)
-├── reparto.html               # app MOTORIZADOS  ← esta
+├── index.html                 # login único + shells de ambas vistas
 ├── css/
-│   ├── styles.css             # panel
-│   └── reparto.css            # motorizados
+│   ├── styles.css             # panel del staff
+│   └── reparto.css            # vista del reparto (se carga por rol)
 ├── img/
-│   └── logo-guidos.png        # logo de la marca (brand + favicon de ambas)
+│   └── logo-guidos.png        # logo (marca + favicon)
 └── js/
-    ├── config.js              # COMPARTIDO: SUPABASE_URL + ANON_KEY (un solo lugar)
-    ├── … (módulos del panel)
-    ├── reparto-supabase.js    # cliente (storageKey propio → sesión separada del staff)
-    ├── reparto-auth.js        # login / logout / sesión
-    ├── reparto-data.js        # fetch en_camino + contador + realtime + accion_staff
-    ├── reparto-render.js      # tarjeta de entrega (escapa todo texto de WhatsApp)
-    └── reparto-app.js         # orquestación + toasts + modal
+    ├── config.js              # SUPABASE_URL + ANON_KEY + ROLES_POR_EMAIL
+    ├── supabase.js · auth.js  # cliente + auth COMPARTIDOS (una sola sesión)
+    ├── roles.js               # rolDeSesion(session)
+    ├── session-router.js      # login + enruta por rol
+    ├── app.js · data.js · render.js · ui.js · actions.js · realtime.js  # staff
+    ├── reparto-data.js        # en_camino + contador + realtime + accion_staff
+    ├── reparto-render.js      # tarjeta de entrega (escapa texto de WhatsApp)
+    └── reparto-app.js         # vista del motorizado (arrancar/detener)
 ```
 
-- **Sin framework, sin build.** HTML + CSS + JS vanilla con módulos ES.
-- `@supabase/supabase-js` v2 se carga por CDN (jsdelivr, UMD → `window.supabase`).
-- El secreto (**anon key**) vive en un único `js/config.js` compartido por las
-  dos apps. Escala agregando otra página `otra-app.html` + módulos `otra-*.js`.
+## Datos que consume la vista de reparto
 
-## Datos que consume
-
-- Vista **`panel_pedidos`** (SELECT para usuarios autenticados). Se filtra por
-  `estado = 'en_camino'` y se cuentan los `'entregado'` para el marcador
-  "Entregados hoy".
-- RPC **`accion_staff(p_accion, p_numero, p_actor)`** → `{ ok, mensaje }`. Única
-  vía para cambiar estado (nunca un UPDATE directo):
-  - `'entregado'` → cierra la entrega.
-  - `'planton'` → nadie recibió; el sistema marca al cliente como *solo prepago*.
-- **Realtime** sobre `orders` (ya está en la publicación `supabase_realtime`) +
-  **polling de respaldo cada 15 s**.
+- Vista **`panel_pedidos`** filtrada por `estado = 'en_camino'`; cuenta los
+  `'entregado'` para el marcador "Entregados hoy".
+- RPC **`accion_staff(p_accion, p_numero, p_actor)`** → `{ ok, mensaje }`:
+  `'entregado'` cierra la entrega; `'planton'` marca al cliente como *solo
+  prepago*.
+- **Realtime** sobre `orders` + **polling de respaldo cada 15 s**.
 
 ## La tarjeta de entrega
 
-1. **#Número** enorme + cronómetro de minutos en camino.
-2. **Bloque de cobro** (lo más importante), con semáforo:
-   - Yape/Plin → **verde**: *✅ YA PAGADO — NO cobrar*.
-   - Efectivo con `paga_con` → **ámbar**: *💵 COBRAR S/X* y el **VUELTO en
-     tipografía gigante*.
-   - Efectivo sin `paga_con` → **ámbar**: *monto exacto, sin vuelto*.
-   - Si hay `agregado_texto` → **franja rayada roja** (puede haber un adicional
-     que se cobra en efectivo aunque el pedido esté pagado con Yape).
-3. **Dirección** + referencia + zona, en texto grande.
-4. **Botón gigante 🗺 IR CON GOOGLE MAPS** (≥56px): usa el pin
-   (`latitude`/`longitude`) si existe, si no busca la dirección escrita.
-5. **Cliente**: nombre + **📞 Llamar** y **💬 WhatsApp** (celular peruano se
-   normaliza con código 51).
-6. **Items** del pedido (colapsable, para revisar la bolsa).
-7. **Cierre**: **✔️ ENTREGADO** (verde, gigante) y **⚠️ Nadie respondió** (rojo,
-   separado, con confirmación) para evitar toques accidentales.
+`#Número` gigante + cronómetro → **bloque de cobro** con semáforo (🟢 pagado /
+no cobrar · 🟡 cobrar efectivo con el **vuelto en tipografía gigante** o monto
+exacto) → **franja roja** si hay `agregado_texto` → dirección grande → **🗺 botón
+gigante a Google Maps** (pin o dirección) → **📞 Llamar / 💬 WhatsApp** →
+items colapsables → **✔️ ENTREGADO** (verde) y **⚠️ Nadie respondió** (rojo,
+separado, con confirmación).
 
 ## Deploy en Coolify
 
-El **mismo servicio** ya publicado sirve las dos apps; no hay que crear otro.
+El **mismo servicio** ya publicado sirve todo; no hay que crear otro.
 
-1. Haz commit y push de estos archivos nuevos/modificados al repo.
-2. En Coolify, en el servicio del panel, dispara un **Redeploy** (el `Dockerfile`
-   ya copia `reparto.html` y `img/`).
-3. Rutas resultantes:
-   - `https://TU-DOMINIO/` → panel del staff.
-   - `https://TU-DOMINIO/reparto.html` → **app de los motorizados**.
-
-> Si prefieres un subdominio propio (p. ej. `reparto.guidos.pe`), en Coolify
-> puedes apuntar otro dominio al mismo contenedor; la app ya funciona en
-> cualquier ruta porque todas sus referencias son relativas.
-
-### Build local (opcional, para probar)
+1. `git push` de estos cambios a `main`.
+2. En Coolify, **Redeploy** del servicio del panel. (En el log debe verse que
+   construye el commit nuevo, **no** *"Build step skipped"* — si lo dice, es que
+   no se subió el commit.)
+3. Resultado: **una sola URL**, `panelguidos.klassia.lat`. El staff entra y ve
+   la cocina; el motorizado entra y ve sus entregas.
 
 ```bash
-docker build -t guidos-web .
-docker run --rm -p 8080:80 guidos-web
-# Panel:       http://localhost:8080/
-# Motorizados: http://localhost:8080/reparto.html
+# Prueba local
+docker build -t guidos-web . && docker run --rm -p 8080:80 guidos-web
+# http://localhost:8080/  (login staff → cocina · login motorizado → reparto)
 ```
 
 ## Crear la cuenta del motorizado (una sola vez)
 
-En el **dashboard de Supabase** → *Authentication → Users → Add user*:
+Ya está creada: `motorizado@guidos.pe` (visible en Supabase → Authentication →
+Users). Para nuevos repartidores: *Add user*, marca *Auto Confirm*, y agrégalo a
+`ROLES_POR_EMAIL` (o ponle `user_metadata.role = "reparto"`).
 
-- **Email:** `motorizado@guidos.pe`
-- **Password:** (la que definas; entrégasela al repartidor)
-- Marca *Auto Confirm User* para que pueda entrar de una.
-
-El staff sigue usando `staff@guidos.pe` en su panel. Son **dos logins
-distintos** sobre la **misma base**.
-
-## Seguridad
+## Seguridad — importante y honesto
 
 - En el navegador va **solo la anon key**, nunca la `service_role`.
-- El acceso lo da la **sesión de Supabase Auth**; las vistas y la RPC solo
-  tienen *grant* a `authenticated`.
-- **Todo** texto dinámico (dirección, nombre, notas, agregado) viene de WhatsApp
-  = entrada no confiable, y se **escapa** antes de tocar el DOM. Los enlaces
+- Todo texto dinámico de WhatsApp se **escapa** antes del DOM; los enlaces
   (maps/tel/wa) usan solo dígitos o `encodeURIComponent`.
-- El cliente del reparto usa un `storageKey` propio: la sesión del motorizado no
-  pisa la del staff aunque ambas apps compartan dominio.
-- Cabeceras y **CSP** los pone `nginx.conf` (ya permite fonts de Google, el CDN
-  de Supabase, `connect` a Supabase y `img 'self'` para el logo).
-
-> **Separación de roles:** hoy la separación entre staff y motorizado es de
-> interfaz + sesión, sobre la misma base. Si más adelante se quiere separación
-> *dura* de permisos por rol, se hará con una tabla de roles + políticas RLS
-> (fuera de alcance ahora).
+- **El enrutado por rol es de interfaz, no de datos.** Hoy cualquier usuario
+  `authenticated` puede, técnicamente, leer las mismas vistas y llamar la misma
+  RPC (los permisos son a nivel `authenticated`). Es decir: el motorizado no
+  *verá* el panel del staff, pero la separación **no** es una barrera de datos.
+- Para **separación dura por rol** (que el motorizado no pueda leer/escribir
+  datos del staff aunque manipule el frontend) hace falta **RLS por rol** en
+  Supabase: una función que lea el rol del JWT/tabla y políticas por tabla.
+  Es el siguiente paso recomendado y se puede montar aparte.

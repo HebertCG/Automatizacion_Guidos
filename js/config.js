@@ -11,6 +11,23 @@ export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Refresco de respaldo del tablero (además del tiempo real), en ms.
 export const REFRESH_MS = 20000;
 
+// ------------------------------------------------------------
+//  Roles → qué vista ve cada usuario al iniciar sesión.
+//  Un solo login y una sola URL: el rol decide si se monta el
+//  PANEL DEL STAFF o la APP DE REPARTO. Fuente única y editable:
+//  agrega aquí cada cuenta nueva.
+//  (Nota: esto es enrutado de interfaz. La separación DURA de
+//   datos por rol se hace con RLS en Supabase — ver README.)
+// ------------------------------------------------------------
+export const ROLES_POR_EMAIL = {
+  "staff@guidos.pe": "staff",
+  "motorizado@guidos.pe": "reparto",
+};
+
+// Si un correo no está en el mapa, se asume el rol de MENOR privilegio
+// (reparto): así una cuenta nueva nunca ve el panel del staff por error.
+export const ROL_POR_DEFECTO = "reparto";
+
 // Umbrales de respaldo (minutos) por si guidos_config no trae algún wd_*.
 // El semáforo de cada tarjeta usa: verde < alerta  ≤  ámbar < urgente  ≤  rojo.
 export const UMBRALES_DEFAULT = {

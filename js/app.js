@@ -214,13 +214,11 @@ function actualizarMute(m) {
   }
 }
 
-async function entrar(session) {
+export async function arrancar(session) {
   if (state.activo) return;
   state.activo = true;
   state.email = auth.currentEmail(session);
 
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
   const who = document.getElementById("user-email");
   if (who) who.textContent = state.email;
   actualizarMute(ui.isMuted());
@@ -242,7 +240,7 @@ async function entrar(session) {
   state.timers.tick = setInterval(ui.refrescarTimers, 1000);
 }
 
-function salir() {
+export function detener() {
   state.activo = false;
   state.snapshotInit = false;
   state.snapshotAtencion = new Set();
@@ -254,37 +252,14 @@ function salir() {
   clearInterval(state.timers.tick);
   clearTimeout(state.timers.debounce);
   ui.pararBlink();
-  document.getElementById("app").classList.add("hidden");
-  document.getElementById("login").classList.remove("hidden");
 }
 
 // ---------- Eventos ----------
 
 function wireEventos() {
-  // Login
-  const form = document.getElementById("login-form");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    ui.unlockAudio();
-    const email = document.getElementById("email").value.trim();
-    const pass = document.getElementById("password").value;
-    const err = document.getElementById("login-error");
-    const btn = document.getElementById("login-btn");
-    err.textContent = "";
-    btn.disabled = true;
-    btn.classList.add("is-loading");
-    try {
-      await auth.signIn(email, pass);
-    } catch (ex) {
-      err.textContent = auth.mensajeLogin(ex);
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove("is-loading");
-    }
-  });
-
-  // Clicks globales (delegación)
-  document.addEventListener("click", async (e) => {
+  // Clicks del panel (delegados dentro de #app; el login y el logout
+  // los maneja el router de sesión).
+  document.getElementById("app").addEventListener("click", async (e) => {
     const tab = e.target.closest("[data-tab]");
     if (tab) return cambiarTab(tab.dataset.tab);
 
@@ -321,10 +296,6 @@ function wireEventos() {
     if (e.target.closest("#btn-mute")) {
       ui.unlockAudio();
       actualizarMute(ui.toggleMute());
-      return;
-    }
-    if (e.target.closest("#btn-logout")) {
-      await auth.signOut();
       return;
     }
     if (e.target.closest("#hist-aplicar")) return cargarHistorial();
@@ -376,15 +347,6 @@ function wireEventos() {
 
 // ---------- Arranque ----------
 
-async function main() {
-  wireEventos();
-  auth.onAuthChange((session) => {
-    if (session) entrar(session);
-    else salir();
-  });
-  const s = await auth.getSession();
-  if (s) await entrar(s);
-  else salir();
-}
-
-main();
+// El router de sesión (js/session-router.js) decide el rol y llama a
+// arrancar()/detener(). Aquí solo cableamos los eventos del panel una vez.
+wireEventos();
