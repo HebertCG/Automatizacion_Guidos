@@ -85,6 +85,12 @@ a { color: inherit; }
   box-shadow: inset 0 0 0 2px rgba(255, 194, 28, 0.35), var(--shadow);
   transform: rotate(-3deg);
 }
+.brand__logo {
+  width: 46px; height: 46px;
+  object-fit: contain;
+  flex: none;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
 .brand__txt { display: flex; flex-direction: column; line-height: 1; }
 .brand__name {
   font-family: var(--font-display);
@@ -107,6 +113,7 @@ a { color: inherit; }
 }
 .brand--login { justify-content: center; margin-bottom: 0.5rem; }
 .brand--login .brand__mark { width: 56px; height: 56px; font-size: 2.1rem; }
+.brand--login .brand__logo { width: 72px; height: 72px; }
 .brand--login .brand__name { font-size: 1.7rem; }
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .field > span { font-size: 0.82rem; color: var(--text-dim); font-weight: 600; }
