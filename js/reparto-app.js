@@ -66,6 +66,51 @@ function confirmar({ titulo, mensaje, ok = "Sí, confirmar", cancelar = "No" }) 
   });
 }
 
+// Modal para el código de entrega: el cliente se lo dicta al motorizado
+// al recibir el pedido. Resuelve con el código (5 dígitos) o null.
+function pedirCodigo(numero) {
+  return new Promise((resolve) => {
+    const ov = document.createElement("div");
+    ov.className = "modal-ov";
+    ov.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true">
+        <h3 class="modal__t">🔐 Código de entrega · #${escTxt(numero)}</h3>
+        <p class="modal__m">Pídele al cliente el código de 5 dígitos que le llegó por WhatsApp cuando saliste en camino.</p>
+        <input class="modal__codigo" type="tel" inputmode="numeric" maxlength="5"
+               pattern="[0-9]*" placeholder="•••••" autocomplete="one-time-code"
+               aria-label="Código de entrega de 5 dígitos">
+        <div class="modal__actions">
+          <button class="btn btn--ghost" data-r="0">Cancelar</button>
+          <button class="btn btn--entregado" data-r="1" disabled>Confirmar entrega</button>
+        </div>
+      </div>`;
+    document.body.appendChild(ov);
+    requestAnimationFrame(() => ov.classList.add("show"));
+    const input = ov.querySelector(".modal__codigo");
+    const okBtn = ov.querySelector('[data-r="1"]');
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(0, 5);
+      okBtn.disabled = input.value.length !== 5;
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && input.value.length === 5) cerrar(input.value);
+    });
+    setTimeout(() => input.focus(), 250);
+    function cerrar(v) {
+      ov.classList.remove("show");
+      setTimeout(() => ov.remove(), 200);
+      resolve(v);
+    }
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) return cerrar(null);
+      const b = e.target.closest("[data-r]");
+      if (!b) return;
+      if (b.dataset.r === "0") return cerrar(null);
+      if (input.value.length === 5) cerrar(input.value);
+    });
+  });
+}
+
 function escTxt(v) {
   return String(v ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -137,6 +182,13 @@ function debouncedRefresh() {
 // ============================================================
 
 async function ejecutarAccion(accion, numero, card) {
+  let codigo = null;
+
+  if (accion === "entregado") {
+    codigo = await pedirCodigo(numero);
+    if (!codigo) return; // canceló el modal
+  }
+
   if (accion === "planton") {
     const ok = await confirmar({
       titulo: "¿Nadie respondió?",
@@ -154,7 +206,7 @@ async function ejecutarAccion(accion, numero, card) {
   state.accionesEnCurso++;
 
   try {
-    const res = await data.accionStaff(accion, numero, state.email);
+    const res = await data.accionStaff(accion, numero, state.email, codigo);
     const r = Array.isArray(res) ? res[0] : res;
     if (r && r.ok) {
       toast(r.mensaje || "Listo ✔️", "ok");

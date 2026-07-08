@@ -56,11 +56,14 @@ export function suscribirPedidos(onChange, onEstado) {
 // ---------- Transición de estado (única vía permitida) ----------
 
 // p_accion: 'entregado' | 'planton'. Devuelve { ok, mensaje }.
-export async function accionStaff(accion, numero, actor) {
+// 'entregado' exige el código de 5 dígitos que el cliente recibió por
+// WhatsApp (la validación real la hace el servidor en accion_staff).
+export async function accionStaff(accion, numero, actor, codigo = null) {
   const { data, error } = await sb.rpc("accion_staff", {
     p_accion: accion,
     p_numero: numero,
     p_actor: actor,
+    p_codigo: codigo,
   });
   if (error) throw error;
   return data;

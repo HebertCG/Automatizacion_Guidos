@@ -132,7 +132,11 @@ export function tarjetaPedido(o) {
     <div class="card__dir">📍 ${esc(o.direccion || "—")}${
       o.referencia ? ` · <span class="ref">${esc(o.referencia)}</span>` : ""
     }</div>
-    <div class="card__meta">${mapsLink(o)}<span class="chip">${esc(o.zona || "sin zona")}</span><span class="chip">Delivery ${soles(o.delivery_fee)}</span></div>
+    <div class="card__meta">${mapsLink(o)}<span class="chip">${esc(o.zona || "sin zona")}</span><span class="chip">Delivery ${soles(o.delivery_fee)}</span>${
+      o.estado === "en_camino" && o.codigo_entrega
+        ? `<span class="chip chip--codigo" title="código de entrega — el cliente se lo da al motorizado">🔐 ${esc(o.codigo_entrega)}</span>`
+        : ""
+    }</div>
     ${o.notas ? `<div class="card__notas">📝 ${esc(o.notas)}</div>` : ""}
     ${o.estado === "cancelado" && o.cancel_reason ? `<div class="card__cancel">✖ ${esc(o.cancel_reason)}</div>` : ""}
     ${o.estado === "pago_en_revision" ? pagoRevisionHtml(o) : ""}

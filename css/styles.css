@@ -291,6 +291,12 @@ a { color: inherit; }
 }
 .chip--link { color: var(--st-cocina); font-weight: 700; }
 .chip--link:hover { border-color: var(--st-cocina); }
+.chip--codigo {
+  color: var(--brand-yellow);
+  border-color: rgba(255, 194, 28, 0.45);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
 .card__notas { font-size: 0.88rem; color: var(--brand-yellow); background: rgba(255, 194, 28, 0.1); padding: 0.35rem 0.55rem; border-radius: var(--radius-sm); }
 .card__cancel { font-size: 0.88rem; color: #ff8a80; }
 .card__agregado {
