@@ -24,9 +24,10 @@ export const ROLES_POR_EMAIL = {
   "staff@guidos.pe": "staff",
   "motorizado@guidos.pe": "reparto",
 
-  // Cuentas de DEMO (credenciales publicadas en el README). Existen solo
-  // para que alguien pueda recorrer el sistema sin pedir acceso. Se crean
-  // en Supabase Auth y en `staff_roles` igual que cualquier otra cuenta.
+  // Cuentas de DEMO (credenciales publicadas en el README). NO existen en
+  // Supabase: se resuelven en el navegador contra datos de ejemplo, ver
+  // js/demo/. Se listan aquí solo como respaldo del mapa de roles; el rol
+  // real ya viaja en el user_metadata de la sesión de demo.
   "demo.staff@guidos.pe": "staff",
   "demo.reparto@guidos.pe": "reparto",
 };
