@@ -4,8 +4,14 @@
 //  (jamás un UPDATE directo de orders.estado).
 //  Solo hay UPDATE directo en menu_items (disponible/precio) y
 //  customers (quitar solo_prepago), permitidos por RLS.
+//
+//  MODO DEMO: si la sesión es de demostración, cada función se
+//  atiende con el almacén en memoria (js/demo/demo-store.js) y no
+//  se toca la red. La forma de lo que se devuelve es idéntica.
 // ============================================================
 import { sb } from "./supabase.js";
+import { activo as demoActivo } from "./demo/demo-sesion.js";
+import * as demo from "./demo/demo-store.js";
 
 // Limpia texto libre antes de meterlo en un filtro .or() de PostgREST.
 function safeLike(t) {
@@ -16,6 +22,7 @@ function safeLike(t) {
 
 // Pedidos activos + los finalizados de hoy (para tablero y pestaña "Hoy").
 export async function fetchPedidos() {
+  if (demoActivo()) return demo.pedidos();
   const { data, error } = await sb
     .from("panel_pedidos")
     .select("*")
@@ -25,18 +32,21 @@ export async function fetchPedidos() {
 }
 
 export async function fetchKpis() {
+  if (demoActivo()) return demo.kpis();
   const { data, error } = await sb.from("panel_kpis_hoy").select("*").maybeSingle();
   if (error) throw error;
   return data ?? {};
 }
 
 export async function fetchConfig() {
+  if (demoActivo()) return demo.config();
   const { data, error } = await sb.from("panel_config").select("*").maybeSingle();
   if (error) throw error;
   return data ?? {};
 }
 
 export async function fetchMenu() {
+  if (demoActivo()) return demo.menu();
   const { data, error } = await sb
     .from("panel_menu")
     .select("*")
@@ -47,6 +57,7 @@ export async function fetchMenu() {
 }
 
 export async function fetchClientes({ search } = {}) {
+  if (demoActivo()) return demo.clientes({ search });
   let q = sb
     .from("panel_clientes")
     .select("*")
@@ -72,6 +83,9 @@ export async function fetchHistorial({
   limit = 40,
   offset = 0,
 } = {}) {
+  if (demoActivo())
+    return demo.historial({ desde, hasta, estado, metodo, q, limit, offset });
+
   let query = sb
     .from("panel_historial")
     .select("*")
@@ -100,18 +114,21 @@ export async function fetchHistorial({
 // ---------- Escrituras permitidas (RLS) ----------
 
 export async function setDisponible(id, value) {
+  if (demoActivo()) return demo.setDisponible(id, value);
   const { error } = await sb.from("menu_items").update({ is_available: value }).eq("id", id);
   if (error) throw error;
   return true;
 }
 
 export async function setPrecio(id, price) {
+  if (demoActivo()) return demo.setPrecio(id, price);
   const { error } = await sb.from("menu_items").update({ price }).eq("id", id);
   if (error) throw error;
   return true;
 }
 
 export async function quitarPrepago(id) {
+  if (demoActivo()) return demo.quitarPrepago(id);
   const { error } = await sb.from("customers").update({ solo_prepago: false }).eq("id", id);
   if (error) throw error;
   return true;
@@ -120,6 +137,8 @@ export async function quitarPrepago(id) {
 // ---------- Transiciones de estado (única vía permitida) ----------
 
 export async function accionStaff(accion, numero, actor) {
+  if (demoActivo()) return demo.accionStaff(accion, numero, actor, null, "staff");
+
   const { data, error } = await sb.rpc("accion_staff", {
     p_accion: accion,
     p_numero: numero,

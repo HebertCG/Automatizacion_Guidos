@@ -133,6 +133,38 @@ a { color: inherit; }
 .login__error { color: #ff8a80; font-weight: 600; min-height: 1.1em; margin: 0; font-size: 0.9rem; }
 .login__hint { text-align: center; color: var(--text-faint); font-size: 0.8rem; margin: 0.25rem 0 0; }
 
+/* ---------- Acceso demo (datos de ejemplo, sin backend) ---------- */
+.demo {
+  display: flex; flex-direction: column; gap: 0.6rem;
+  margin-top: 0.25rem; padding-top: 1rem;
+  border-top: 1px dashed var(--line-strong);
+  text-align: center;
+}
+.demo__t {
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.4px;
+  text-transform: uppercase; color: var(--brand-yellow);
+}
+.demo__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.btn--demo {
+  height: 44px;
+  background: rgba(255, 194, 28, 0.09);
+  border: 1px solid rgba(255, 194, 28, 0.35);
+  color: var(--text);
+  font-weight: 700; font-size: 0.9rem;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.btn--demo:hover { background: rgba(255, 194, 28, 0.18); border-color: var(--brand-yellow); }
+.btn--demo:active { transform: translateY(1px); }
+.btn--demo:focus-visible {
+  outline: none; border-color: var(--brand-yellow);
+  box-shadow: 0 0 0 3px rgba(255, 194, 28, 0.25);
+}
+.demo__nota { font-size: 0.72rem; color: var(--text-faint); }
+@media (max-width: 380px) {
+  .demo__btns { grid-template-columns: 1fr; }
+}
+
 /* ---------- Topbar ---------- */
 .app { display: flex; flex-direction: column; min-height: 100dvh; }
 .offline {

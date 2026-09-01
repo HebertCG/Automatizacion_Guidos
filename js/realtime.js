@@ -5,8 +5,16 @@
 //  comparando snapshots en app.js, no con el payload del evento.
 // ============================================================
 import { sb } from "./supabase.js";
+import { activo as demoActivo } from "./demo/demo-sesion.js";
+import { suscribir as demoSuscribir } from "./demo/demo-store.js";
 
 export function suscribirPedidos(onChange, onEstado) {
+  // En demo el "tiempo real" lo emite el propio almacén al mutar.
+  if (demoActivo()) {
+    if (typeof onEstado === "function") onEstado("SUBSCRIBED");
+    return demoSuscribir(onChange);
+  }
+
   const channel = sb
     .channel("panel-orders")
     .on(

@@ -93,6 +93,17 @@ function wireLogin() {
     }
   });
 
+  // Botones de acceso demo: rellenan el formulario y lo envían.
+  form.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-demo]");
+    if (!b) return;
+    const correo =
+      b.dataset.demo === "reparto" ? "demo.reparto@guidos.pe" : "demo.staff@guidos.pe";
+    el("email").value = correo;
+    el("password").value = "GuidosDemo2026!";
+    form.requestSubmit();
+  });
+
   // Cerrar sesión desde cualquiera de las dos apps.
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-logout]")) auth.signOut();

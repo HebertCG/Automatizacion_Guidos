@@ -13,45 +13,65 @@ motorizado, en una sola URL, con la vista decidida por el rol de quien entra.
 
 ## 🔑 Acceso demo
 
-Dos cuentas de demostración para recorrer el sistema sin pedir acceso. Se entra
-por la **misma URL y el mismo formulario**: lo único que cambia es la vista, y la
-decide el rol.
+### 👉 [automatizacion-guidos.vercel.app](https://automatizacion-guidos.vercel.app)
+
+En la pantalla de login hay dos botones —**🍗 Ver cocina** y **🛵 Ver reparto**—
+que entran de un clic. O escribe las credenciales a mano:
 
 | Rol | Correo | Contraseña | Qué se ve al entrar |
 |-----|--------|------------|---------------------|
 | **Staff · cocina** | `demo.staff@guidos.pe` | `GuidosDemo2026!` | Panel en vivo: pedidos con semáforo por tiempo, KPIs del día, carta editable, historial y clientes. |
 | **Reparto · motorizado** | `demo.reparto@guidos.pe` | `GuidosDemo2026!` | Solo las entregas en camino: mapa, monto a cobrar, vuelto y confirmación por código de 5 dígitos. |
 
+Es la **misma URL y el mismo formulario** para los dos: lo único que cambia es la
+vista, y la decide el rol.
+
 > 📱 La vista de reparto está diseñada para el celular. Ábrela en un móvil o en
 > el modo responsive del navegador (≤ 480 px de ancho) para verla como es.
 
+**Qué se puede probar de verdad en la demo** — no son capturas, el sistema
+funciona:
+
+- Confirmar o rechazar un **voucher de Yape** y ver cómo el pedido salta a cocina.
+  Hay uno cuyo monto **cuadra** (#1048) y otro que **no** (#1047), para ver el
+  contraste que produce la lectura automática de n8n.
+- Despachar un pedido con **🛵 Salió en camino** → el sistema **genera el código
+  de entrega de 5 dígitos** y lo muestra en la tarjeta.
+- Entrar como reparto, tocar **✔️ ENTREGADO** y comprobar que **exige ese código**:
+  con uno equivocado no deja cerrar la entrega.
+- Registrar un **plantón** y ver cómo el cliente queda marcado *solo-prepago* al
+  instante, también en la pestaña de clientes.
+- Cambiar precios y marcar platos agotados en la **carta**.
+- Los **KPIs y el semáforo se recalculan solos** con cada acción.
+
 <details>
-<summary><b>Crear estas dos cuentas (una sola vez, lo hace el administrador)</b></summary>
+<summary><b>Cómo funciona el modo demo por dentro</b></summary>
 
-1. **Supabase → Authentication → Users → Add user**, con **Auto Confirm User**
-   marcado, para cada uno de los dos correos.
+Las cuentas `demo.*` **no existen en Supabase**: se resuelven en el navegador y
+la demo **no hace una sola llamada de red**. Todo vive en
+[`js/demo/`](js/demo/):
 
-2. Asignarles el rol en `staff_roles`, que es la tabla que gobierna la RLS:
+- [`demo-datos.js`](js/demo/demo-datos.js) — la semilla: 13 pedidos que cubren
+  los 7 estados de la máquina, 14 productos, 9 clientes. Las marcas de tiempo se
+  generan **relativas a la hora en que abres la página**, así los cronómetros y
+  los colores del semáforo siempre se ven vivos.
+- [`demo-store.js`](js/demo/demo-store.js) — almacén en memoria que replica el
+  contrato del backend: las vistas `panel_*`, los KPIs calculados y la máquina de
+  estados completa de `accion_staff`, **incluido el blindaje por rol** (un usuario
+  `reparto` solo puede `entregado` y `planton`) y la validación del código de
+  entrega.
+- [`demo-sesion.js`](js/demo/demo-sesion.js) — sesión falsa con la misma forma que
+  la de Supabase Auth, para que `roles.js` y las dos apps la consuman sin cambios.
 
-   ```sql
-   insert into public.staff_roles (user_id, rol)
-   select id, 'staff' from auth.users where lower(email) = 'demo.staff@guidos.pe'
-   on conflict (user_id) do update set rol = excluded.rol;
+Se engancha con una guarda de una línea en cada función de
+[`data.js`](js/data.js) y [`reparto-data.js`](js/reparto-data.js). Si la sesión no
+es de demo, **todo sigue yendo contra Supabase como siempre**: el modo demo no
+reemplaza nada, solo se antepone.
 
-   insert into public.staff_roles (user_id, rol)
-   select id, 'reparto' from auth.users where lower(email) = 'demo.reparto@guidos.pe'
-   on conflict (user_id) do update set rol = excluded.rol;
-   ```
-
-3. En el código no hay nada que tocar: los dos correos ya están declarados en
-   `ROLES_POR_EMAIL`, dentro de [`js/config.js`](js/config.js).
+La semilla se regenera en cada recarga de la página, así que si dejas la demo
+hecha un desastre, basta con recargar (F5).
 
 </details>
-
-> ⚠️ **`demo.staff` tiene exactamente los mismos permisos que el staff real:**
-> puede aceptar y cancelar pedidos, cambiar precios y marcar plantones. Si la
-> demo va a ser pública, apúntala a un **proyecto de Supabase aparte con datos de
-> prueba** en vez de a producción (ver [§10](#10-estado-actual-y-siguientes-pasos)).
 
 ---
 
@@ -352,7 +372,12 @@ Automatizacion_Guidos/
 │   │
 │   ├── reparto-app.js          # ── REPARTO: vista del motorizado + código de entrega
 │   ├── reparto-data.js         #    en_camino + contador + realtime + accion_staff
-│   └── reparto-render.js       #    tarjeta de entrega (escapa texto de WhatsApp)
+│   ├── reparto-render.js       #    tarjeta de entrega (escapa texto de WhatsApp)
+│   │
+│   └── demo/                   # ── MODO DEMO: el sistema entero sin backend
+│       ├── demo-datos.js       #    semilla (13 pedidos, carta, clientes)
+│       ├── demo-store.js       #    vistas panel_* + accion_staff en memoria
+│       └── demo-sesion.js      #    sesión falsa con la forma de Supabase Auth
 │
 ├── vercel.json                 # despliegue en Vercel: headers, CSP, caché, redirects
 ├── package.json                # scripts de desarrollo local (sin dependencias de runtime)
@@ -560,10 +585,16 @@ Se mantiene para autoalojar en un VPS:
   `supabase migration`.
 - **Los flujos de n8n viven fuera de este repositorio.** Conviene exportar los
   workflows a JSON y versionarlos, aunque sea en privado.
-- **La demo comparte base con producción.** Las cuentas `demo.*` operan sobre los
-  datos reales, así que `demo.staff` puede cancelar pedidos de verdad. Lo sano es
-  un **proyecto de Supabase aparte, con datos sembrados de prueba**, y publicar
-  esa URL como demo.
+- **El backend de producción está apagado.** El proyecto de Supabase que usaba
+  esta instancia ya no existe, así que las cuentas reales (`staff@guidos.pe`,
+  `motorizado@guidos.pe`) no pueden iniciar sesión: el login falla al no poder
+  conectar. Para revivirlo hay que crear un proyecto nuevo, aplicar las
+  migraciones de [§7.2](#72-el-esquema-de-la-base-de-datos) y actualizar
+  `SUPABASE_URL` / `SUPABASE_ANON_KEY` en [`js/config.js`](js/config.js).
+  **El modo demo no depende de eso** y funciona siempre.
+- **La demo no persiste.** Los cambios viven en memoria y se pierden al recargar.
+  Es a propósito —así la demo siempre se ve bien— pero significa que no sirve
+  para probar comportamiento entre sesiones.
 
 **Siguientes pasos naturales:** tabla de historial de transiciones (habilita
 métricas reales y auditoría), entorno de demo aislado, asignación de pedidos a un
