@@ -4,3 +4,6 @@ node_modules/
 .env.local
 .DS_Store
 npm-debug.log*
+
+# Migraciones SQL: se aplican en Supabase, fuera del repo publico.
+*.sql

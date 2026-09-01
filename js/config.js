@@ -20,8 +20,15 @@ export const REFRESH_MS = 20000;
 //   datos por rol se hace con RLS en Supabase — ver README.)
 // ------------------------------------------------------------
 export const ROLES_POR_EMAIL = {
+  // Cuentas de producción.
   "staff@guidos.pe": "staff",
   "motorizado@guidos.pe": "reparto",
+
+  // Cuentas de DEMO (credenciales publicadas en el README). Existen solo
+  // para que alguien pueda recorrer el sistema sin pedir acceso. Se crean
+  // en Supabase Auth y en `staff_roles` igual que cualquier otra cuenta.
+  "demo.staff@guidos.pe": "staff",
+  "demo.reparto@guidos.pe": "reparto",
 };
 
 // Si un correo no está en el mapa, se asume el rol de MENOR privilegio

@@ -11,8 +11,53 @@ motorizado, en una sola URL, con la vista decidida por el rol de quien entra.
 
 ---
 
+## 🔑 Acceso demo
+
+Dos cuentas de demostración para recorrer el sistema sin pedir acceso. Se entra
+por la **misma URL y el mismo formulario**: lo único que cambia es la vista, y la
+decide el rol.
+
+| Rol | Correo | Contraseña | Qué se ve al entrar |
+|-----|--------|------------|---------------------|
+| **Staff · cocina** | `demo.staff@guidos.pe` | `GuidosDemo2026!` | Panel en vivo: pedidos con semáforo por tiempo, KPIs del día, carta editable, historial y clientes. |
+| **Reparto · motorizado** | `demo.reparto@guidos.pe` | `GuidosDemo2026!` | Solo las entregas en camino: mapa, monto a cobrar, vuelto y confirmación por código de 5 dígitos. |
+
+> 📱 La vista de reparto está diseñada para el celular. Ábrela en un móvil o en
+> el modo responsive del navegador (≤ 480 px de ancho) para verla como es.
+
+<details>
+<summary><b>Crear estas dos cuentas (una sola vez, lo hace el administrador)</b></summary>
+
+1. **Supabase → Authentication → Users → Add user**, con **Auto Confirm User**
+   marcado, para cada uno de los dos correos.
+
+2. Asignarles el rol en `staff_roles`, que es la tabla que gobierna la RLS:
+
+   ```sql
+   insert into public.staff_roles (user_id, rol)
+   select id, 'staff' from auth.users where lower(email) = 'demo.staff@guidos.pe'
+   on conflict (user_id) do update set rol = excluded.rol;
+
+   insert into public.staff_roles (user_id, rol)
+   select id, 'reparto' from auth.users where lower(email) = 'demo.reparto@guidos.pe'
+   on conflict (user_id) do update set rol = excluded.rol;
+   ```
+
+3. En el código no hay nada que tocar: los dos correos ya están declarados en
+   `ROLES_POR_EMAIL`, dentro de [`js/config.js`](js/config.js).
+
+</details>
+
+> ⚠️ **`demo.staff` tiene exactamente los mismos permisos que el staff real:**
+> puede aceptar y cancelar pedidos, cambiar precios y marcar plantones. Si la
+> demo va a ser pública, apúntala a un **proyecto de Supabase aparte con datos de
+> prueba** en vez de a producción (ver [§10](#10-estado-actual-y-siguientes-pasos)).
+
+---
+
 ## Índice
 
+0. [🔑 Acceso demo](#-acceso-demo)
 1. [La problemática](#1-la-problemática)
 2. [Cómo la encontramos](#2-cómo-la-encontramos)
 3. [Cómo la resolvimos](#3-cómo-la-resolvimos)
@@ -165,7 +210,7 @@ pago adelantado**. El staff puede perdonarlo desde la pestaña de clientes.
 
 La primera versión enrutaba por rol **en el frontend**, lo cual es cosmético:
 cualquiera con la sesión abierta podía, técnicamente, consultar las mismas
-vistas. `06-roles-rls.sql` cerró ese hueco con **RLS en Postgres**:
+vistas. La migración de roles cerró ese hueco con **RLS en Postgres**:
 
 - tabla `staff_roles` (usuario → rol) con RLS activa y **sin políticas** para
   `authenticated`: el navegador no la puede leer, solo las funciones
@@ -309,9 +354,6 @@ Automatizacion_Guidos/
 │   ├── reparto-data.js         #    en_camino + contador + realtime + accion_staff
 │   └── reparto-render.js       #    tarjeta de entrega (escapa texto de WhatsApp)
 │
-├── 05-dashboard.sql            # vistas + RLS de lectura + grants
-├── 06-roles-rls.sql            # separación dura por rol (staff_roles + RLS + blindaje RPC)
-│
 ├── vercel.json                 # despliegue en Vercel: headers, CSP, caché, redirects
 ├── package.json                # scripts de desarrollo local (sin dependencias de runtime)
 ├── Dockerfile · nginx.conf     # despliegue alternativo autoalojado (Coolify)
@@ -350,19 +392,30 @@ export const REFRESH_MS = 20000;
 > expuesta en el navegador con acceso total a la base de datos. La `service_role`
 > vive únicamente en n8n. Ningún otro archivo debe contener credenciales.
 
-### 7.2 Ejecutar el SQL en Supabase
+### 7.2 El esquema de la base de datos
 
-En **SQL Editor**, en este orden:
+> Las migraciones SQL **no viven en este repositorio**: se aplican directamente
+> en el SQL Editor de Supabase y se mantienen fuera del código público. Este
+> repositorio contiene únicamente el frontend. Lo que sigue documenta **qué debe
+> existir en la base** para que el panel funcione.
 
-**`05-dashboard.sql`** — crea las vistas `security_invoker` (`panel_pedidos`,
-`panel_historial`, `panel_kpis_hoy`, `panel_menu`, `panel_clientes`,
-`panel_config`), la RLS de solo lectura para `authenticated`, el `grant execute`
-de `accion_staff` y la publicación Realtime de `orders`. **Nada** queda accesible
-para el rol `anon`.
+El proyecto de Supabase debe tener, además de las tablas base (`orders`,
+`order_items`, `customers`, `menu_items`, `menu_categories`, `guidos_config`):
 
-**`06-roles-rls.sql`** — activa la separación dura por rol. Idempotente.
+**Migración del panel** — las vistas `security_invoker` que consume el frontend
+(`panel_pedidos`, `panel_historial`, `panel_kpis_hoy`, `panel_menu`,
+`panel_clientes`, `panel_config`), la RLS de solo lectura para `authenticated`,
+el `grant execute` de `accion_staff` y la publicación Realtime de `orders`.
+**Nada** queda accesible para el rol `anon`.
 
-Requisitos que asumen los scripts:
+**Migración de roles** — la separación dura descrita en [§3.6](#36-separación-dura-por-rol-no-solo-de-interfaz):
+tabla `staff_roles`, helpers `mi_rol()` / `es_staff()`, políticas por tabla y el
+blindaje por rol dentro de `accion_staff`.
+
+**Migración del código de entrega** — la columna `orders.codigo_entrega` y el
+parámetro `p_codigo` de `accion_staff`, que valida el código en el servidor.
+
+Requisitos que asumen esas migraciones:
 
 - `accion_staff` es **SECURITY DEFINER** (así el staff la ejecuta sin necesitar
   `UPDATE` sobre `orders`). Verifícalo:
@@ -472,9 +525,9 @@ Se mantiene para autoalojar en un VPS:
 
 - En el navegador viaja **solo la anon key**. La `service_role` vive únicamente
   en n8n, fuera de este repositorio.
-- **Separación dura por rol con RLS** (`06-roles-rls.sql`): el rol `reparto` no
-  puede leer carta, configuración ni clientes aunque manipule el frontend, y solo
-  puede ejecutar `'entregado'` y `'planton'`.
+- **Separación dura por rol con RLS** en Postgres: el rol `reparto` no puede leer
+  carta, configuración ni clientes aunque manipule el frontend, y solo puede
+  ejecutar `'entregado'` y `'planton'`.
 - **Ninguna escritura directa de estado.** El frontend nunca hace `UPDATE` sobre
   `orders.estado`; solo existen `UPDATE` acotados en `menu_items`
   (`is_available`, `price`) y `customers` (`solo_prepago`), y solo para staff.
@@ -499,17 +552,23 @@ Se mantiene para autoalojar en un VPS:
   `pago_verificado_at`, porque el esquema **no guarda un historial de
   transiciones**. Para promedios históricos precisos haría falta una tabla que
   registre cada cambio de estado.
-- **La migración del código de entrega no está versionada aquí.** El frontend ya
-  envía `p_codigo` a `accion_staff` y lee `orders.codigo_entrega`, pero la columna
-  y la nueva firma de la función se aplicaron directamente en Supabase. Falta
-  añadir un `07-codigo-entrega.sql` al repositorio para que el despliegue sea
-  reproducible desde cero.
+- **El esquema de la base no está versionado aquí.** Las migraciones se aplican a
+  mano en el SQL Editor de Supabase y se mantienen fuera del repositorio público
+  ([§7.2](#72-el-esquema-de-la-base-de-datos)). Es una decisión deliberada, pero
+  tiene un costo: **el despliegue no es reproducible desde cero** desde este
+  repositorio. Lo correcto a futuro es llevarlas en un repositorio privado o con
+  `supabase migration`.
 - **Los flujos de n8n viven fuera de este repositorio.** Conviene exportar los
-  workflows a JSON y versionarlos junto al código.
+  workflows a JSON y versionarlos, aunque sea en privado.
+- **La demo comparte base con producción.** Las cuentas `demo.*` operan sobre los
+  datos reales, así que `demo.staff` puede cancelar pedidos de verdad. Lo sano es
+  un **proyecto de Supabase aparte, con datos sembrados de prueba**, y publicar
+  esa URL como demo.
 
 **Siguientes pasos naturales:** tabla de historial de transiciones (habilita
-métricas reales y auditoría), asignación de pedidos a un motorizado concreto
-cuando haya más de uno, y un reporte de cierre de caja diario.
+métricas reales y auditoría), entorno de demo aislado, asignación de pedidos a un
+motorizado concreto cuando haya más de uno, y un reporte de cierre de caja
+diario.
 
 ---
 
