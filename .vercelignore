@@ -1,0 +1,6 @@
+# El deploy de Vercel solo necesita el frontend estatico.
+*.sql
+Dockerfile
+nginx.conf
+.dockerignore
+docs/

@@ -1,6 +1,11 @@
 05-dashboard.sql
 06-roles-rls.sql
-README-dashboard.md
 .git
 .gitignore
 *.md
+node_modules
+package.json
+package-lock.json
+vercel.json
+.vercel
+.vercelignore
