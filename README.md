@@ -9,6 +9,10 @@ motorizado, en una sola URL, con la vista decidida por el rol de quien entra.
 > `staff@guidos.pe` entra → ve el **panel de cocina**.
 > `motorizado@guidos.pe` entra → ve **solo sus entregas**.
 
+<img width="797" height="363" alt="image" src="https://github.com/user-attachments/assets/a56ddb85-d4f9-426f-a1fc-12754287a69b" />
+
+
+
 ---
 
 ## 🔑 Acceso demo
